@@ -1,5 +1,5 @@
-import * as path from "node:path";
 import * as fs from "node:fs";
+import * as path from "node:path";
 import { CWD } from "./paths.ts";
 
 export function resolvePath(p: string): string {
@@ -41,24 +41,15 @@ export function formatToolLabel(name: string, args: Record<string, any>): string
       return `grep ${args.pattern}${extra}`;
     }
     case "run_command": {
-      const cmd =
-        args.command.length > 50
-          ? args.command.slice(0, 50) + "..."
-          : args.command;
+      const cmd = args.command.length > 50 ? `${args.command.slice(0, 50)}...` : args.command;
       return `run ${cmd}`;
     }
     case "web_search": {
-      const q =
-        args.query.length > 40
-          ? args.query.slice(0, 40) + "..."
-          : args.query;
+      const q = args.query.length > 40 ? `${args.query.slice(0, 40)}...` : args.query;
       return `search ${q}`;
     }
     case "web_fetch": {
-      const u =
-        args.url.length > 50
-          ? args.url.slice(0, 50) + "..."
-          : args.url;
+      const u = args.url.length > 50 ? `${args.url.slice(0, 50)}...` : args.url;
       return `fetch ${u}`;
     }
     default:

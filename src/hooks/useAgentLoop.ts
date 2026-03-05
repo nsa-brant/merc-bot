@@ -1,17 +1,17 @@
-import { useCallback } from "react";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import { useCallback } from "react";
+import { apiCallWithRetry } from "../lib/api.ts";
+import { renderMarkdown } from "../lib/markdown.ts";
+import { executeTool, formatToolLabel } from "../lib/tools.ts";
 import type {
-  ChatState,
-  StreamedToolCall,
-  CompletedItemInput,
-  Phase,
   ActiveToolCall,
+  ChatState,
+  CompletedItemInput,
   ConfirmFn,
   DeleteConfirmFn,
+  Phase,
+  StreamedToolCall,
 } from "../lib/types.ts";
-import { apiCallWithRetry } from "../lib/api.ts";
-import { executeTool, formatToolLabel } from "../lib/tools.ts";
-import { renderMarkdown } from "../lib/markdown.ts";
 
 const MAX_ITERATIONS = 15;
 
@@ -77,8 +77,7 @@ export function useAgentLoop(deps: AgentLoopDeps) {
                     toolCalls.push({ id: "", name: "", arguments: "" });
                   }
                   if (tc.id) toolCalls[tc.index]!.id = tc.id;
-                  if (tc.function?.name)
-                    toolCalls[tc.index]!.name = tc.function.name;
+                  if (tc.function?.name) toolCalls[tc.index]!.name = tc.function.name;
                   if (tc.function?.arguments)
                     toolCalls[tc.index]!.arguments += tc.function.arguments;
                 }
@@ -124,19 +123,12 @@ export function useAgentLoop(deps: AgentLoopDeps) {
 
             const label = formatToolLabel(tc.name, fnArgs);
             const isWrite =
-              tc.name === "write_file" ||
-              tc.name === "edit_file" ||
-              tc.name === "delete_file";
+              tc.name === "write_file" || tc.name === "edit_file" || tc.name === "delete_file";
 
             // Show tool call in live area
             deps.addToolCall({ name: tc.name, label, isWrite });
 
-            const result = await executeTool(
-              tc.name,
-              fnArgs,
-              deps.confirm,
-              deps.deleteConfirm
-            );
+            const result = await executeTool(tc.name, fnArgs, deps.confirm, deps.deleteConfirm);
 
             // Move to completed and update live area
             deps.addCompleted({
@@ -175,7 +167,7 @@ export function useAgentLoop(deps: AgentLoopDeps) {
 
       deps.setPhase("idle");
     },
-    [deps]
+    [deps],
   );
 
   return { runLoop };

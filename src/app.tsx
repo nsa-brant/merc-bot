@@ -1,20 +1,20 @@
-import React, { useState, useEffect } from "react";
-import { Box, Text, Static } from "ink";
+import * as path from "node:path";
+import { Box, Static, Text } from "ink";
 import Spinner from "ink-spinner";
 import type OpenAI from "openai";
-import type { CompletedItem } from "./lib/types.ts";
+import { useEffect, useState } from "react";
 import Banner from "./components/Banner.tsx";
-import MessageBlock from "./components/MessageBlock.tsx";
-import StreamingResponse from "./components/StreamingResponse.tsx";
-import DiffView from "./components/DiffView.tsx";
 import ConfirmDialog from "./components/ConfirmDialog.tsx";
+import DiffView from "./components/DiffView.tsx";
+import MessageBlock from "./components/MessageBlock.tsx";
 import Prompt from "./components/Prompt.tsx";
+import StreamingResponse from "./components/StreamingResponse.tsx";
+import { useAgentLoop } from "./hooks/useAgentLoop.ts";
 import { useChat } from "./hooks/useChat.ts";
 import { useConfirm } from "./hooks/useConfirm.ts";
 import { useHistory } from "./hooks/useHistory.ts";
 import { useSlashCommands } from "./hooks/useSlashCommands.ts";
-import { useAgentLoop } from "./hooks/useAgentLoop.ts";
-import * as path from "node:path";
+import type { CompletedItem } from "./lib/types.ts";
 
 interface AppProps {
   client: OpenAI;
@@ -38,13 +38,13 @@ export default function App({ client, defaultModel, initialCookMode = false }: A
     chat.setDeleteConfirmRequest,
     chat.confirmRequest,
     chat.deleteConfirmRequest,
-    cookMode
+    cookMode,
   );
 
   // Set client on mount
   useEffect(() => {
     chat.updateClient(client);
-  }, [client]);
+  }, [client, chat.updateClient]);
 
   const { handleCommand } = useSlashCommands({
     getState: chat.getState,
@@ -84,7 +84,7 @@ export default function App({ client, defaultModel, initialCookMode = false }: A
     return () => {
       process.removeListener("SIGINT", handler);
     };
-  }, [interrupted]);
+  }, [interrupted, chat.addCompleted]);
 
   const handleSubmit = (input: string) => {
     addEntry(input);
@@ -130,11 +130,7 @@ export default function App({ client, defaultModel, initialCookMode = false }: A
             oldContent={chat.confirmRequest.oldContent}
             newContent={chat.confirmRequest.newContent}
           />
-          <ConfirmDialog
-            message="Apply?"
-            onConfirm={handleConfirm}
-            onDeny={handleDeny}
-          />
+          <ConfirmDialog message="Apply?" onConfirm={handleConfirm} onDeny={handleDeny} />
         </Box>
       )}
 
@@ -148,11 +144,9 @@ export default function App({ client, defaultModel, initialCookMode = false }: A
       )}
 
       {/* Prompt: only when idle and no pending confirmations */}
-      {chat.phase === "idle" &&
-        !chat.confirmRequest &&
-        !chat.deleteConfirmRequest && (
-          <Prompt onSubmit={handleSubmit} history={history} />
-        )}
+      {chat.phase === "idle" && !chat.confirmRequest && !chat.deleteConfirmRequest && (
+        <Prompt onSubmit={handleSubmit} history={history} />
+      )}
     </Box>
   );
 }

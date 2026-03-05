@@ -1,0 +1,19 @@
+pre-commit:
+  commands:
+    biome:
+      glob: "*.{ts,tsx,json}"
+      run: bunx biome check --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
+      stage_fixed: true
+
+commit-msg:
+  commands:
+    conventional-commit:
+      run: |
+        msg=$(head -1 "$(git rev-parse --git-dir)/COMMIT_EDITMSG")
+        if ! echo "$msg" | grep -qE '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?!?:\s.+'; then
+          echo "ERROR: Commit message must follow Conventional Commits format."
+          echo "  e.g. feat: add new feature"
+          echo "       fix(parser): handle edge case"
+          echo "  Got: $msg"
+          exit 1
+        fi

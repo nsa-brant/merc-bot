@@ -99,8 +99,7 @@ export const tools: ChatCompletionTool[] = [
     type: "function",
     function: {
       name: "list_directory",
-      description:
-        "List files and directories. Returns names with / suffix for directories.",
+      description: "List files and directories. Returns names with / suffix for directories.",
       parameters: {
         type: "object",
         properties: {
@@ -140,8 +139,7 @@ export const tools: ChatCompletionTool[] = [
     type: "function",
     function: {
       name: "run_command",
-      description:
-        "Run a shell command and return its output. Use for builds, tests, git, etc.",
+      description: "Run a shell command and return its output. Use for builds, tests, git, etc.",
       parameters: {
         type: "object",
         properties: {

@@ -1,4 +1,3 @@
-import React from "react";
 import { Text } from "ink";
 
 interface ToolCallProps {
@@ -6,9 +5,5 @@ interface ToolCallProps {
 }
 
 export default function ToolCall({ label }: ToolCallProps) {
-  return (
-    <Text dimColor>
-      ├ ◆ {label}
-    </Text>
-  );
+  return <Text dimColor>├ ◆ {label}</Text>;
 }

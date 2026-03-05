@@ -47,13 +47,15 @@ export function validateUrl(url: string): { valid: boolean; reason: string } {
   // Block private/internal IP ranges
   const ipv4Match = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
   if (ipv4Match) {
-    const [, a, b] = ipv4Match.map(Number) as [number, number, number, number, number];
+    const octets = ipv4Match.map(Number);
+    const a = octets[1];
+    const b = octets[2];
     // 10.0.0.0/8
     if (a === 10) {
       return { valid: false, reason: "Blocked private IP range (10.x.x.x)" };
     }
     // 172.16.0.0/12
-    if (a === 172 && b! >= 16 && b! <= 31) {
+    if (a === 172 && b >= 16 && b <= 31) {
       return { valid: false, reason: "Blocked private IP range (172.16-31.x.x)" };
     }
     // 192.168.0.0/16
@@ -76,10 +78,7 @@ export function validateUrl(url: string): { valid: boolean; reason: string } {
 /**
  * Search DuckDuckGo and return parsed results.
  */
-export async function webSearch(
-  query: string,
-  maxResults: number = 8
-): Promise<SearchResult[]> {
+export async function webSearch(query: string, maxResults: number = 8): Promise<SearchResult[]> {
   const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
   const res = await fetch(url, {
     method: "POST",
@@ -121,20 +120,12 @@ function parseDDGResults(html: string, max: number): SearchResult[] {
     }
 
     // Extract title text
-    const titleMatch = block.match(
-      /class="result__a"[^>]*>([\s\S]*?)<\/a>/
-    );
-    const title = titleMatch
-      ? stripHtml(titleMatch[1]!).trim()
-      : "";
+    const titleMatch = block.match(/class="result__a"[^>]*>([\s\S]*?)<\/a>/);
+    const title = titleMatch ? stripHtml(titleMatch[1]!).trim() : "";
 
     // Extract snippet
-    const snippetMatch = block.match(
-      /class="result__snippet"[^>]*>([\s\S]*?)<\/(?:a|td|span)>/
-    );
-    const snippet = snippetMatch
-      ? stripHtml(snippetMatch[1]!).trim()
-      : "";
+    const snippetMatch = block.match(/class="result__snippet"[^>]*>([\s\S]*?)<\/(?:a|td|span)>/);
+    const snippet = snippetMatch ? stripHtml(snippetMatch[1]!).trim() : "";
 
     if (url && title) {
       results.push({ title, url, snippet });
@@ -147,10 +138,7 @@ function parseDDGResults(html: string, max: number): SearchResult[] {
 /**
  * Fetch a URL and return its text content (HTML stripped).
  */
-export async function webFetch(
-  url: string,
-  maxLength: number = 8000
-): Promise<string> {
+export async function webFetch(url: string, maxLength: number = 8000): Promise<string> {
   const validation = validateUrl(url);
   if (!validation.valid) {
     throw new Error(`SSRF protection: ${validation.reason} — ${url}`);
@@ -223,7 +211,7 @@ function htmlToText(html: string, maxLength: number): string {
     .trim();
 
   if (text.length > maxLength) {
-    text = text.slice(0, maxLength) + "\n\n[truncated]";
+    text = `${text.slice(0, maxLength)}\n\n[truncated]`;
   }
 
   return text;

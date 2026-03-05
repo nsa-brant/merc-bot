@@ -1,6 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { SESSIONS_DIR, CWD } from "./paths.ts";
+import { CWD, SESSIONS_DIR } from "./paths.ts";
 import type { ChatState } from "./types.ts";
 
 export function saveSession(state: ChatState, name?: string): string {
@@ -17,10 +17,7 @@ export function saveSession(state: ChatState, name?: string): string {
   return sessionName;
 }
 
-export function loadSession(
-  state: ChatState,
-  name: string
-): { success: boolean; message: string } {
+export function loadSession(state: ChatState, name: string): { success: boolean; message: string } {
   const filePath = path.join(SESSIONS_DIR, `${name}.json`);
   if (!fs.existsSync(filePath)) {
     return { success: false, message: `Session not found: ${name}` };
@@ -42,21 +39,15 @@ export interface SessionInfo {
 
 export function listSessions(): SessionInfo[] {
   fs.mkdirSync(SESSIONS_DIR, { recursive: true });
-  const files = fs
-    .readdirSync(SESSIONS_DIR)
-    .filter((f) => f.endsWith(".json"));
+  const files = fs.readdirSync(SESSIONS_DIR).filter((f) => f.endsWith(".json"));
   return files.map((f) => {
     const name = f.replace(".json", "");
     try {
-      const data = JSON.parse(
-        fs.readFileSync(path.join(SESSIONS_DIR, f), "utf-8")
-      );
+      const data = JSON.parse(fs.readFileSync(path.join(SESSIONS_DIR, f), "utf-8"));
       return {
         name,
         messageCount: (data.messages?.length || 1) - 1,
-        date: data.savedAt
-          ? new Date(data.savedAt).toLocaleDateString()
-          : "?",
+        date: data.savedAt ? new Date(data.savedAt).toLocaleDateString() : "?",
       };
     } catch {
       return { name, messageCount: 0, date: "?" };

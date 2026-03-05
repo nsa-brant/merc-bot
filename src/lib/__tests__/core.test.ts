@@ -1,5 +1,5 @@
-import { test, expect, describe } from "bun:test";
-import { isDangerousCommand, validateToolArgs, formatToolLabel } from "../tools.ts";
+import { describe, expect, test } from "bun:test";
+import { formatToolLabel, isDangerousCommand, validateToolArgs } from "../tools.ts";
 import { validateUrl } from "../web.ts";
 
 // ---------------------------------------------------------------------------
@@ -62,7 +62,7 @@ describe("validateToolArgs", () => {
           path: "/tmp/test.txt",
           old_string: "foo",
           new_string: "bar",
-        })
+        }),
       ).toBeNull();
     });
 
@@ -79,31 +79,31 @@ describe("validateToolArgs", () => {
     test("read_file missing path", () => {
       const result = validateToolArgs("read_file", {});
       expect(result).toBeTypeOf("string");
-      expect(result!).toContain("path");
+      expect(result).toContain("path");
     });
 
     test("read_file with wrong type for path", () => {
       const result = validateToolArgs("read_file", { path: 123 });
       expect(result).toBeTypeOf("string");
-      expect(result!).toContain("string");
+      expect(result).toContain("string");
     });
 
     test("edit_file missing old_string", () => {
       const result = validateToolArgs("edit_file", { path: "/tmp" });
       expect(result).toBeTypeOf("string");
-      expect(result!).toContain("old_string");
+      expect(result).toContain("old_string");
     });
 
     test("run_command missing command", () => {
       const result = validateToolArgs("run_command", {});
       expect(result).toBeTypeOf("string");
-      expect(result!).toContain("command");
+      expect(result).toContain("command");
     });
 
     test("web_fetch with wrong type for url", () => {
       const result = validateToolArgs("web_fetch", { url: 42 });
       expect(result).toBeTypeOf("string");
-      expect(result!).toContain("string");
+      expect(result).toContain("string");
     });
   });
 });

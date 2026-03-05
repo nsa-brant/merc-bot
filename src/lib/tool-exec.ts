@@ -1,10 +1,10 @@
+import { execFileSync, execSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { execSync, execFileSync } from "node:child_process";
 import { CWD } from "./paths.ts";
+import { isBinary, resolvePath } from "./tool-utils.ts";
 import type { ConfirmFn, DeleteConfirmFn } from "./types.ts";
-import { webSearch, webFetch } from "./web.ts";
-import { resolvePath, isBinary } from "./tool-utils.ts";
+import { webFetch, webSearch } from "./web.ts";
 
 const DANGEROUS_PATTERNS: { pattern: RegExp; reason: string }[] = [
   { pattern: /\brm\s+(-[^\s]*r|-r[^\s]*)\b/, reason: "Recursive delete (rm -r)" },
@@ -66,10 +66,7 @@ const TOOL_ARG_SCHEMAS: Record<string, { field: string; type: string }[]> = {
  * Validate tool arguments against the required schema.
  * Returns null if valid, or a descriptive error message if invalid.
  */
-export function validateToolArgs(
-  name: string,
-  args: Record<string, any>
-): string | null {
+export function validateToolArgs(name: string, args: Record<string, any>): string | null {
   const schema = TOOL_ARG_SCHEMAS[name];
   if (!schema) return null; // unknown tool — let executeTool handle it
 
@@ -93,7 +90,7 @@ export async function executeTool(
   name: string,
   args: Record<string, any>,
   confirm: ConfirmFn,
-  deleteConfirm: DeleteConfirmFn
+  deleteConfirm: DeleteConfirmFn,
 ): Promise<string> {
   try {
     const validationError = validateToolArgs(name, args);
@@ -111,8 +108,7 @@ export async function executeTool(
 
       case "edit_file": {
         const filePath = resolvePath(args.path);
-        if (!fs.existsSync(filePath))
-          return `Error: File not found: ${filePath}`;
+        if (!fs.existsSync(filePath)) return `Error: File not found: ${filePath}`;
 
         const oldContent = fs.readFileSync(filePath, "utf-8");
         if (!args.old_string) {
@@ -133,9 +129,7 @@ export async function executeTool(
         if (!approved) return "User denied the edit.";
 
         fs.writeFileSync(filePath, newContent, "utf-8");
-        const count = args.replace_all
-          ? oldContent.split(args.old_string).length - 1
-          : 1;
+        const count = args.replace_all ? oldContent.split(args.old_string).length - 1 : 1;
         return `Applied edit to ${filePath} (${count} replacement${count > 1 ? "s" : ""})`;
       }
 
@@ -212,7 +206,7 @@ export async function executeTool(
         const check = isDangerousCommand(args.command);
         if (check.dangerous) {
           const confirmed = await deleteConfirm(
-            `⚠️ Dangerous command: ${check.reason}\n${args.command}`
+            `⚠️ Dangerous command: ${check.reason}\n${args.command}`,
           );
           if (!confirmed) return "User denied dangerous command.";
         }

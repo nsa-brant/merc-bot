@@ -1,6 +1,6 @@
-import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
+import { useState } from "react";
 
 interface PromptProps {
   onSubmit: (input: string) => void;
@@ -14,10 +14,7 @@ export default function Prompt({ onSubmit, history }: PromptProps) {
 
   useInput((_input, key) => {
     if (key.upArrow && history.length > 0) {
-      const newIndex =
-        historyIndex === -1
-          ? history.length - 1
-          : Math.max(0, historyIndex - 1);
+      const newIndex = historyIndex === -1 ? history.length - 1 : Math.max(0, historyIndex - 1);
 
       if (historyIndex === -1) {
         setSavedInput(value);
@@ -50,11 +47,7 @@ export default function Prompt({ onSubmit, history }: PromptProps) {
   return (
     <Box>
       <Text color="cyan">› </Text>
-      <TextInput
-        value={value}
-        onChange={setValue}
-        onSubmit={handleSubmit}
-      />
+      <TextInput value={value} onChange={setValue} onSubmit={handleSubmit} />
     </Box>
   );
 }
