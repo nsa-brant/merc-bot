@@ -93,13 +93,14 @@ export default function App({ client, defaultModel }: AppProps) {
 
   return (
     <Box flexDirection="column">
-      <Banner model={chat.model} />
-
-      {/* Scrollback: completed messages */}
-      <Static items={chat.completedItems}>
-        {(item: CompletedItem) => (
-          <MessageBlock key={item.id} item={item} />
-        )}
+      {/* Scrollback: banner + completed messages */}
+      <Static items={[{ id: "banner", type: "banner" as const }, ...chat.completedItems]}>
+        {(item: any) => {
+          if (item.type === "banner") {
+            return <Banner key="banner" model={chat.model} />;
+          }
+          return <MessageBlock key={item.id} item={item as CompletedItem} />;
+        }}
       </Static>
 
       {/* Live area: hidden when confirm dialog is showing */}
