@@ -2,6 +2,8 @@ import { execFileSync, execSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { CWD } from "./paths.ts";
+import { executeUseSkill } from "./skills.ts";
+import { skillRegistry } from "./tool-defs.ts";
 import { isBinary, resolvePath } from "./tool-utils.ts";
 import type { ConfirmFn, DeleteConfirmFn } from "./types.ts";
 import { webFetch, webSearch } from "./web.ts";
@@ -60,6 +62,7 @@ const TOOL_ARG_SCHEMAS: Record<string, { field: string; type: string }[]> = {
   run_command: [{ field: "command", type: "string" }],
   web_search: [{ field: "query", type: "string" }],
   web_fetch: [{ field: "url", type: "string" }],
+  use_skill: [{ field: "name", type: "string" }],
 };
 
 /**
@@ -233,6 +236,10 @@ export async function executeTool(
 
       case "web_fetch": {
         return await webFetch(args.url, args.max_length ?? 8000);
+      }
+
+      case "use_skill": {
+        return await executeUseSkill(args.name ?? "", skillRegistry);
       }
 
       default:

@@ -1,6 +1,9 @@
 import type OpenAI from "openai";
 import { useCallback, useRef, useState } from "react";
 import { CWD } from "../lib/paths.ts";
+import type { SkillRegistry } from "../lib/skills.ts";
+import { buildSkillsPromptSection } from "../lib/skills.ts";
+import { skillRegistry } from "../lib/tools.ts";
 import type {
   ActiveToolCall,
   ChatState,
@@ -11,7 +14,7 @@ import type {
   Phase,
 } from "../lib/types.ts";
 
-const SYSTEM_PROMPT = `You are Mercury, an ultra-fast AI coding agent powered by Inception Labs' diffusion LLM.
+const BASE_PROMPT = `You are Mercury, an ultra-fast AI coding agent powered by Inception Labs' diffusion LLM.
 You have tools to read, edit, write, delete, rename files, list directories, search code, and run shell commands.
 
 Current working directory: ${CWD}
@@ -34,6 +37,12 @@ Formatting rules for terminal output:
 - Use bullet lists instead of tables for reviews, recommendations, or any content with long descriptions.
 - Only use tables for short, structured data (3-5 word cells max).
 - Use **bold** for emphasis and \`code\` for identifiers.`;
+
+export function buildSystemPrompt(registry: SkillRegistry): string {
+  return BASE_PROMPT + buildSkillsPromptSection(registry);
+}
+
+const SYSTEM_PROMPT = buildSystemPrompt(skillRegistry);
 
 export function useChat(client: OpenAI, defaultModel: string) {
   const [model, setModel] = useState(defaultModel);
