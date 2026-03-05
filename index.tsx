@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+
 /**
  * merc — Mercury 2 coding agent CLI
  * Usage: merc [prompt]
@@ -6,14 +7,14 @@
  *   One-shot mode:    merc "explain diffusion models"
  */
 
-import React, { useState } from "react";
-import { render, Box } from "ink";
-import { loadConfig, getDefaultModel } from "./src/lib/config.ts";
-import { createClient } from "./src/lib/api.ts";
-import App from "./src/app.tsx";
-import OneShot from "./src/one-shot.tsx";
-import ApiKeySetup from "./src/components/ApiKeySetup.tsx";
+import { render } from "ink";
 import type OpenAI from "openai";
+import React, { useState } from "react";
+import App from "./src/app.tsx";
+import ApiKeySetup from "./src/components/ApiKeySetup.tsx";
+import { createClient } from "./src/lib/api.ts";
+import { getDefaultModel, loadConfig } from "./src/lib/config.ts";
+import OneShot from "./src/one-shot.tsx";
 
 const rawArgs = process.argv.slice(2);
 const cookFlag = rawArgs.includes("--cook");
@@ -52,7 +53,9 @@ function Root() {
 
   if (args.length > 0) {
     const prompt = args.join(" ");
-    return <OneShot client={client} defaultModel={defaultModel} prompt={prompt} cookMode={cookFlag} />;
+    return (
+      <OneShot client={client} defaultModel={defaultModel} prompt={prompt} cookMode={cookFlag} />
+    );
   }
 
   return <App client={client} defaultModel={defaultModel} initialCookMode={cookFlag} />;

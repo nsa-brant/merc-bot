@@ -1,7 +1,6 @@
-import React from "react";
 import { Box, Text } from "ink";
-import type { CompletedItem } from "../lib/types.ts";
 import { renderMarkdown } from "../lib/markdown.ts";
+import type { CompletedItem } from "../lib/types.ts";
 
 interface MessageBlockProps {
   item: CompletedItem;
@@ -50,29 +49,24 @@ export default function MessageBlock({ item }: MessageBlockProps) {
                 .split("\n")
                 .slice(0, 3)
                 .map((line, i) => {
-                  const trimmed =
-                    line.length > 120 ? line.slice(0, 120) + "…" : line;
+                  const trimmed = line.length > 120 ? `${line.slice(0, 120)}…` : line;
                   return (
                     <Text key={i} dimColor>
-                      │   {trimmed}
+                      │ {trimmed}
                     </Text>
                   );
                 })}
               {item.result.split("\n").length > 3 && (
-                <Text dimColor>
-                  │   … {item.result.split("\n").length - 3} more lines
-                </Text>
+                <Text dimColor>│ … {item.result.split("\n").length - 3} more lines</Text>
               )}
             </>
           )}
-          {item.isWrite && item.result && (
-            <Text dimColor>  {item.result}</Text>
-          )}
+          {item.isWrite && item.result && <Text dimColor> {item.result}</Text>}
         </Box>
       );
 
     case "status":
-      return <Text dimColor>  {item.content}</Text>;
+      return <Text dimColor> {item.content}</Text>;
 
     default:
       return null;

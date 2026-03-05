@@ -1,7 +1,6 @@
-import React from "react";
-import { Box, Text } from "ink";
-import { VERSION, CWD, COLS } from "../lib/paths.ts";
 import * as path from "node:path";
+import { Box, Text } from "ink";
+import { COLS, CWD, VERSION } from "../lib/paths.ts";
 
 interface BannerProps {
   model: string;
@@ -27,7 +26,9 @@ export default function Banner({ model, cookMode = false }: BannerProps) {
         {cookMode && (
           <>
             <Text dimColor> · </Text>
-            <Text color="yellow" bold>cook</Text>
+            <Text color="yellow" bold>
+              cook
+            </Text>
           </>
         )}
       </Text>

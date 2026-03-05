@@ -1,6 +1,6 @@
-import React, { useState } from "react";
 import { Box, Text } from "ink";
 import TextInput from "ink-text-input";
+import { useState } from "react";
 import { saveConfig } from "../lib/config.ts";
 
 interface ApiKeySetupProps {

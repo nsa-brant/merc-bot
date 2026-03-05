@@ -15,11 +15,7 @@ export interface DiffResult {
 
 const MAX_DIFF_LINES = 80;
 
-export function computeDiff(
-  filePath: string,
-  oldContent: string,
-  newContent: string
-): DiffResult {
+export function computeDiff(filePath: string, oldContent: string, newContent: string): DiffResult {
   const rel = path.relative(CWD, filePath) || filePath;
   const changes = diffLines(oldContent, newContent);
   const lines: DiffLine[] = [];

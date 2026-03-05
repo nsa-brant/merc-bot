@@ -1,16 +1,16 @@
-import React, { useEffect } from "react";
-import { Box, Text, Static, useApp } from "ink";
+import * as path from "node:path";
+import { Box, Static, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
 import type OpenAI from "openai";
-import type { CompletedItem } from "./lib/types.ts";
+import { useEffect } from "react";
+import ConfirmDialog from "./components/ConfirmDialog.tsx";
+import DiffView from "./components/DiffView.tsx";
 import MessageBlock from "./components/MessageBlock.tsx";
 import StreamingResponse from "./components/StreamingResponse.tsx";
-import DiffView from "./components/DiffView.tsx";
-import ConfirmDialog from "./components/ConfirmDialog.tsx";
+import { useAgentLoop } from "./hooks/useAgentLoop.ts";
 import { useChat } from "./hooks/useChat.ts";
 import { useConfirm } from "./hooks/useConfirm.ts";
-import { useAgentLoop } from "./hooks/useAgentLoop.ts";
-import * as path from "node:path";
+import type { CompletedItem } from "./lib/types.ts";
 
 interface OneShotProps {
   client: OpenAI;
@@ -34,12 +34,12 @@ export default function OneShot({ client, defaultModel, prompt, cookMode = false
     chat.setDeleteConfirmRequest,
     chat.confirmRequest,
     chat.deleteConfirmRequest,
-    cookMode
+    cookMode,
   );
 
   useEffect(() => {
     chat.updateClient(client);
-  }, [client]);
+  }, [client, chat.updateClient]);
 
   const { runLoop } = useAgentLoop({
     getState: chat.getState,
@@ -57,14 +57,12 @@ export default function OneShot({ client, defaultModel, prompt, cookMode = false
     runLoop(prompt).then(() => {
       setTimeout(() => exit(), 100);
     });
-  }, []);
+  }, [exit, prompt, runLoop]);
 
   return (
     <Box flexDirection="column">
       <Static items={chat.completedItems}>
-        {(item: CompletedItem) => (
-          <MessageBlock key={item.id} item={item} />
-        )}
+        {(item: CompletedItem) => <MessageBlock key={item.id} item={item} />}
       </Static>
 
       {chat.phase === "thinking" && !chat.confirmRequest && !chat.deleteConfirmRequest && (
@@ -87,11 +85,7 @@ export default function OneShot({ client, defaultModel, prompt, cookMode = false
             oldContent={chat.confirmRequest.oldContent}
             newContent={chat.confirmRequest.newContent}
           />
-          <ConfirmDialog
-            message="Apply?"
-            onConfirm={handleConfirm}
-            onDeny={handleDeny}
-          />
+          <ConfirmDialog message="Apply?" onConfirm={handleConfirm} onDeny={handleDeny} />
         </Box>
       )}
 

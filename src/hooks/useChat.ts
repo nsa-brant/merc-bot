@@ -1,16 +1,15 @@
-import { useState, useCallback, useRef, useMemo } from "react";
-import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import type OpenAI from "openai";
+import { useCallback, useRef, useState } from "react";
+import { CWD } from "../lib/paths.ts";
 import type {
+  ActiveToolCall,
   ChatState,
   CompletedItem,
   CompletedItemInput,
-  Phase,
-  ActiveToolCall,
   ConfirmRequest,
   DeleteConfirmRequest,
+  Phase,
 } from "../lib/types.ts";
-import { CWD } from "../lib/paths.ts";
 
 const SYSTEM_PROMPT = `You are Mercury, an ultra-fast AI coding agent powered by Inception Labs' diffusion LLM.
 You have tools to read, edit, write, delete, rename files, list directories, search code, and run shell commands.
@@ -42,11 +41,10 @@ export function useChat(client: OpenAI, defaultModel: string) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [streamText, setStreamText] = useState("");
   const [toolCalls, setToolCalls] = useState<ActiveToolCall[]>([]);
-  const [confirmRequest, setConfirmRequest] = useState<ConfirmRequest | null>(
-    null
+  const [confirmRequest, setConfirmRequest] = useState<ConfirmRequest | null>(null);
+  const [deleteConfirmRequest, setDeleteConfirmRequest] = useState<DeleteConfirmRequest | null>(
+    null,
   );
-  const [deleteConfirmRequest, setDeleteConfirmRequest] =
-    useState<DeleteConfirmRequest | null>(null);
 
   const stateRef = useRef<ChatState>({
     model: defaultModel,
@@ -67,9 +65,12 @@ export function useChat(client: OpenAI, defaultModel: string) {
   const idCounter = useRef(0);
   const nextId = useCallback(() => `item-${++idCounter.current}`, []);
 
-  const addCompleted = useCallback((item: CompletedItemInput) => {
-    setCompletedItems((prev) => [...prev, { ...item, id: nextId() }]);
-  }, [nextId]);
+  const addCompleted = useCallback(
+    (item: CompletedItemInput) => {
+      setCompletedItems((prev) => [...prev, { ...item, id: nextId() }]);
+    },
+    [nextId],
+  );
 
   const clearConversation = useCallback(() => {
     stateRef.current.messages = [stateRef.current.messages[0]!];

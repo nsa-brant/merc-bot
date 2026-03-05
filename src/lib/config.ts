@@ -31,7 +31,5 @@ export async function getApiKey(): Promise<string> {
   if (config?.api_key) return config.api_key;
   // In ink mode, API key setup is handled by the App component
   // This fallback is for non-interactive usage
-  throw new Error(
-    "No API key found. Set INCEPTION_API_KEY env var or run merc interactively."
-  );
+  throw new Error("No API key found. Set INCEPTION_API_KEY env var or run merc interactively.");
 }

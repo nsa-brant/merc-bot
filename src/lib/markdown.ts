@@ -18,7 +18,7 @@ const originalRenderer = terminalOpts.renderer ?? {};
 
 // Custom hr — use ─ instead of dashes
 originalRenderer.hr = (): string => {
-  return "\n" + chalk.dim("─".repeat(Math.min(CONTENT_WIDTH, 60))) + "\n";
+  return `\n${chalk.dim("─".repeat(Math.min(CONTENT_WIDTH, 60)))}\n`;
 };
 
 // Custom table — card layout for wide/many-column tables
@@ -37,8 +37,7 @@ originalRenderer.table = (token: any): string => {
 
   if (token.header) {
     for (const cell of token.header) {
-      const text =
-        cell.tokens?.map((t: any) => t.raw ?? t.text ?? "").join("") ?? "";
+      const text = cell.tokens?.map((t: any) => t.raw ?? t.text ?? "").join("") ?? "";
       headers.push(stripMd(text));
     }
   }
@@ -46,8 +45,7 @@ originalRenderer.table = (token: any): string => {
     for (const row of token.rows) {
       const cells: string[] = [];
       for (const cell of row) {
-        const text =
-          cell.tokens?.map((t: any) => t.raw ?? t.text ?? "").join("") ?? "";
+        const text = cell.tokens?.map((t: any) => t.raw ?? t.text ?? "").join("") ?? "";
         cells.push(stripMd(text));
       }
       rows.push(cells);
@@ -60,7 +58,7 @@ originalRenderer.table = (token: any): string => {
   const longestCell = Math.max(
     0,
     ...headers.map((h) => h.length),
-    ...rows.flatMap((r) => r.map((c) => c.length))
+    ...rows.flatMap((r) => r.map((c) => c.length)),
   );
 
   if (longestCell > 35 || colCount >= 4) {
@@ -74,14 +72,14 @@ originalRenderer.table = (token: any): string => {
         out += `  ${chalk.cyan.bold(label)}: ${value}\n`;
       }
     }
-    return out + "\n";
+    return `${out}\n`;
   }
 
   // Compact table for small data
   const widths: number[] = [];
   for (let i = 0; i < colCount; i++) {
     const headerW = headers[i]?.length ?? 0;
-    const maxCellW = Math.max(0, ...rows.map((r) => (r[i]?.length ?? 0)));
+    const maxCellW = Math.max(0, ...rows.map((r) => r[i]?.length ?? 0));
     widths.push(Math.max(headerW, maxCellW) + 2);
   }
 
@@ -95,7 +93,7 @@ originalRenderer.table = (token: any): string => {
   }
 
   const truncPad = (s: string, w: number) => {
-    if (s.length > w) return s.slice(0, w - 1) + "…";
+    if (s.length > w) return `${s.slice(0, w - 1)}…`;
     return s + " ".repeat(Math.max(0, w - s.length));
   };
 
@@ -103,18 +101,15 @@ originalRenderer.table = (token: any): string => {
   let out = "\n";
 
   if (headers.length) {
-    out +=
-      chalk.bold(headers.map((h, i) => truncPad(h, widths[i]!)).join(" │ ")) +
-      "\n";
-    out += chalk.dim(sep) + "\n";
+    out += `${chalk.bold(headers.map((h, i) => truncPad(h, widths[i]!)).join(" │ "))}\n`;
+    out += `${chalk.dim(sep)}\n`;
   }
 
   for (const row of rows) {
-    out +=
-      row.map((c, i) => truncPad(c, widths[i]!)).join(chalk.dim(" │ ")) + "\n";
+    out += `${row.map((c, i) => truncPad(c, widths[i]!)).join(chalk.dim(" │ "))}\n`;
   }
 
-  return out + "\n";
+  return `${out}\n`;
 };
 
 const marked = new Marked({ renderer: originalRenderer, ...terminalOpts });
@@ -157,7 +152,7 @@ export function renderMarkdown(text: string): string {
       // Detect leading indent to preserve on continuation lines
       const indentMatch = stripAnsi(line).match(/^(\s*)/);
       const indent = indentMatch ? indentMatch[1]! : "";
-      const contIndent = indent + "  ";
+      const contIndent = `${indent}  `;
 
       const words = line.split(/( +)/);
       let current = "";

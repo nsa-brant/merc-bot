@@ -1,8 +1,8 @@
 import OpenAI from "openai";
 import type { ChatCompletionTool } from "openai/resources/chat/completions";
 import { BASE_URL, MAX_RETRIES } from "./paths.ts";
-import type { ChatState } from "./types.ts";
 import { tools } from "./tools.ts";
+import type { ChatState } from "./types.ts";
 
 export async function createClient(apiKey: string): Promise<OpenAI> {
   return new OpenAI({ apiKey, baseURL: BASE_URL });
@@ -10,7 +10,7 @@ export async function createClient(apiKey: string): Promise<OpenAI> {
 
 export async function apiCallWithRetry(
   state: ChatState,
-  toolDefs: ChatCompletionTool[] = tools
+  toolDefs: ChatCompletionTool[] = tools,
 ): Promise<AsyncIterable<any>> {
   let lastErr: any;
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
@@ -26,7 +26,7 @@ export async function apiCallWithRetry(
     } catch (err: any) {
       lastErr = err;
       if (attempt < MAX_RETRIES - 1) {
-        const delay = Math.pow(2, attempt) * 1000;
+        const delay = 2 ** attempt * 1000;
         await new Promise((r) => setTimeout(r, delay));
       }
     }

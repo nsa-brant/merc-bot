@@ -1,5 +1,5 @@
-import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import type OpenAI from "openai";
+import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 
 export interface MercConfig {
   api_key: string;
@@ -21,7 +21,7 @@ export interface StreamedToolCall {
 export type ConfirmFn = (
   filePath: string,
   oldContent: string,
-  newContent: string
+  newContent: string,
 ) => Promise<boolean>;
 
 export type DeleteConfirmFn = (filePath: string) => Promise<boolean>;
