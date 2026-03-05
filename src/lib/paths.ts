@@ -12,3 +12,5 @@ export const CWD = process.cwd();
 export const MAX_RETRIES = 3;
 export const COLS = process.stdout.columns || 80;
 export const DEFAULT_MODEL = process.env.MERCURY_MODEL ?? "mercury-2"; // config override applied in config.ts
+export const GLOBAL_SKILLS_DIR = path.join(CONFIG_DIR, "skills");
+export const LOCAL_SKILLS_DIR = path.join(CWD, ".merc", "skills");

@@ -1,6 +1,29 @@
 import type { ChatCompletionTool } from "openai/resources/chat/completions";
+import { loadSkills } from "./skills.ts";
 
-export const tools: ChatCompletionTool[] = [
+export const skillRegistry = loadSkills();
+
+const useSkillTool: ChatCompletionTool = {
+  type: "function",
+  function: {
+    name: "use_skill",
+    description:
+      "Load the full instructions for an installed skill. Call this when the user's request " +
+      "matches a skill's purpose. The skill's instructions will guide your next actions.",
+    parameters: {
+      type: "object",
+      properties: {
+        name: {
+          type: "string",
+          description: "The skill name to activate (as listed in Available Skills)",
+        },
+      },
+      required: ["name"],
+    },
+  },
+};
+
+const baseTools: ChatCompletionTool[] = [
   {
     type: "function",
     function: {
@@ -190,3 +213,6 @@ export const tools: ChatCompletionTool[] = [
     },
   },
 ];
+
+export const tools: ChatCompletionTool[] =
+  skillRegistry.size > 0 ? [...baseTools, useSkillTool] : baseTools;

@@ -1,9 +1,20 @@
+import { execFileSync } from "node:child_process";
+import * as fs from "node:fs";
 import { useApp } from "ink";
 import OpenAI from "openai";
 import { useCallback } from "react";
 import { loadConfig, saveConfig } from "../lib/config.ts";
-import { BASE_URL, CONFIG_FILE, VERSION } from "../lib/paths.ts";
+import {
+  BASE_URL,
+  CONFIG_FILE,
+  CWD,
+  GLOBAL_SKILLS_DIR,
+  LOCAL_SKILLS_DIR,
+  VERSION,
+} from "../lib/paths.ts";
 import { listSessions, loadSession, saveSession } from "../lib/sessions.ts";
+import type { SkillRegistry } from "../lib/skills.ts";
+import { reloadSkills } from "../lib/skills.ts";
 import type { ChatState, CompletedItemInput } from "../lib/types.ts";
 
 interface SlashCommandDeps {
@@ -15,6 +26,9 @@ interface SlashCommandDeps {
   model: string;
   cookMode?: boolean;
   setCookMode?: (mode: boolean) => void;
+  skillRegistry?: SkillRegistry;
+  refreshSystemPrompt?: () => void;
+  runLoop?: (message: string) => void;
 }
 
 /**
@@ -156,10 +170,100 @@ export function useSlashCommands(deps: SlashCommandDeps) {
           }
           return true;
 
+        case "/skills": {
+          const registry = deps.skillRegistry;
+          if (!arg) {
+            // List skills
+            if (!registry || registry.size === 0) {
+              status("No skills installed.");
+              status("");
+              status("Install skills with:");
+              status("  /skills add <owner/repo>          (project-local)");
+              status("  /skills add <owner/repo> --global  (global)");
+              status("");
+              status(`Local:  ${LOCAL_SKILLS_DIR}`);
+              status(`Global: ${GLOBAL_SKILLS_DIR}`);
+            } else {
+              status(`${registry.size} skill${registry.size === 1 ? "" : "s"} installed:`);
+              status("");
+              for (const [, skill] of registry) {
+                const src = skill.source === "global" ? "(global)" : "(local)";
+                status(`  ${skill.name.padEnd(24)} ${src}  ${skill.description}`);
+              }
+            }
+          } else if (arg.startsWith("add ")) {
+            // /skills add <owner/repo> [--global]
+            const addArgs = arg.slice(4).trim().split(/\s+/);
+            const repo = addArgs.find((a) => !a.startsWith("-"));
+            const isGlobal = addArgs.includes("--global") || addArgs.includes("-g");
+            if (!repo) {
+              status("Usage: /skills add <owner/repo> [--global]");
+              return true;
+            }
+            const targetDir = isGlobal ? GLOBAL_SKILLS_DIR : LOCAL_SKILLS_DIR;
+            fs.mkdirSync(targetDir, { recursive: true });
+            status(`Installing ${repo} to ${isGlobal ? "global" : "local"} skills...`);
+            try {
+              const output = execFileSync("npx", ["skills", "add", repo, "--copy", "-y"], {
+                encoding: "utf-8",
+                cwd: CWD,
+                timeout: 60000,
+                env: { ...process.env, MERC_SKILLS_DIR: targetDir },
+                stdio: ["pipe", "pipe", "pipe"],
+              }).trim();
+              if (output) status(output);
+              // Reload registry and refresh system prompt
+              if (registry) {
+                reloadSkills(registry);
+                deps.refreshSystemPrompt?.();
+              }
+              status(
+                `Done. ${registry?.size ?? 0} skill${(registry?.size ?? 0) === 1 ? "" : "s"} now installed.`,
+              );
+            } catch (e: unknown) {
+              // npx skills may not support --agent merc yet, so fall back to manual copy
+              const msg = e instanceof Error ? e.message.split("\n")[0] : "unknown error";
+              status(`npx skills failed: ${msg}`);
+              status("Try manually placing skill directories in:");
+              status(`  ${targetDir}/<skill-name>/SKILL.md`);
+            }
+          } else if (arg.startsWith("remove ")) {
+            // /skills remove <name>
+            const skillName = arg.slice(7).trim().toLowerCase();
+            if (!skillName) {
+              status("Usage: /skills remove <skill-name>");
+              return true;
+            }
+            if (!registry || !registry.has(skillName)) {
+              status(`Skill not found: "${skillName}"`);
+              return true;
+            }
+            const skill = registry.get(skillName);
+            if (!skill) {
+              status(`Skill not found: "${skillName}"`);
+              return true;
+            }
+            try {
+              fs.rmSync(skill.dir, { recursive: true, force: true });
+              reloadSkills(registry);
+              deps.refreshSystemPrompt?.();
+              status(`Removed skill: ${skill.name}`);
+            } catch (e: unknown) {
+              const msg = e instanceof Error ? e.message : "unknown error";
+              status(`Error removing skill: ${msg}`);
+            }
+          } else {
+            status("Usage: /skills [add <owner/repo> [--global] | remove <name>]");
+          }
+          return true;
+        }
+
         case "/help": {
           const cmds = [
             ["/clear", "Reset conversation"],
             ["/cook", "Toggle auto-approve file writes"],
+            ["/skills", "List, add, or remove skills"],
+            ["/<skill-name>", "Activate an installed skill"],
             ["/model [name]", "Show or switch model"],
             ["/system [prompt]", "Show or change system prompt"],
             ["/key [key]", "Show or update API key"],
@@ -176,9 +280,20 @@ export function useSlashCommands(deps: SlashCommandDeps) {
           return true;
         }
 
-        default:
+        default: {
+          // Check if the command matches an installed skill name
+          const skillName = cmd?.slice(1).toLowerCase(); // strip leading /
+          const registry = deps.skillRegistry;
+          if (skillName && registry?.has(skillName) && deps.runLoop) {
+            const skill = registry.get(skillName);
+            if (!skill) return true;
+            status(`Activating skill: ${skill.name}`);
+            deps.runLoop(`Use the "${skill.name}" skill. ${arg || ""}`);
+            return true;
+          }
           status(`Unknown: ${cmd}`);
           return true;
+        }
       }
     },
     [deps, exit],
