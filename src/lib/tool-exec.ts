@@ -1,12 +1,13 @@
 import { execFileSync, execSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { cancelAgent, createAgent, getAgent, listAgents } from "./agent-manager.ts";
 import { callMcpTool, isMcpTool } from "./mcp.ts";
 import { CWD } from "./paths.ts";
 import { executeUseSkill } from "./skills.ts";
 import { skillRegistry } from "./tool-defs.ts";
 import { isBinary, resolvePath } from "./tool-utils.ts";
-import type { ConfirmFn, DeleteConfirmFn } from "./types.ts";
+import type { ChatState, ConfirmFn, DeleteConfirmFn } from "./types.ts";
 import { webFetch, webSearch } from "./web.ts";
 
 const DANGEROUS_PATTERNS: { pattern: RegExp; reason: string }[] = [
@@ -64,6 +65,10 @@ const TOOL_ARG_SCHEMAS: Record<string, { field: string; type: string }[]> = {
   web_search: [{ field: "query", type: "string" }],
   web_fetch: [{ field: "url", type: "string" }],
   use_skill: [{ field: "name", type: "string" }],
+  create_agent: [{ field: "prompt", type: "string" }],
+  list_agents: [],
+  get_agent_status: [{ field: "id", type: "string" }],
+  cancel_agent: [{ field: "id", type: "string" }],
 };
 
 /**
@@ -95,6 +100,7 @@ export async function executeTool(
   args: Record<string, any>,
   confirm: ConfirmFn,
   deleteConfirm: DeleteConfirmFn,
+  chatState?: ChatState,
 ): Promise<string> {
   try {
     const validationError = validateToolArgs(name, args);
@@ -241,6 +247,53 @@ export async function executeTool(
 
       case "use_skill": {
         return await executeUseSkill(args.name ?? "", skillRegistry);
+      }
+
+      case "create_agent": {
+        if (!chatState) return "Error: Agent tools require chat state.";
+        try {
+          const id = createAgent(chatState.client, chatState.model, args.prompt);
+          return `Started background agent ${id}. Use get_agent_status to check on it.`;
+        } catch (err: any) {
+          return `Error: ${err.message}`;
+        }
+      }
+
+      case "list_agents": {
+        const agents = listAgents();
+        if (agents.length === 0) return "No background agents.";
+        return agents
+          .map((a) => {
+            const elapsed = Math.round((Date.now() - a.createdAt) / 1000);
+            const snippet = a.prompt.length > 60 ? `${a.prompt.slice(0, 60)}...` : a.prompt;
+            return `${a.id} [${a.status}] ${elapsed}s — ${snippet}`;
+          })
+          .join("\n");
+      }
+
+      case "get_agent_status": {
+        const agent = getAgent(args.id);
+        if (!agent) return `Error: Agent "${args.id}" not found.`;
+        const elapsed = Math.round(((agent.completedAt ?? Date.now()) - agent.createdAt) / 1000);
+        let result = `Agent: ${agent.id}\nStatus: ${agent.status}\nElapsed: ${elapsed}s\nPrompt: ${agent.prompt}`;
+        if (agent.toolLog.length > 0) {
+          result += `\n\nTool log:\n${agent.toolLog.join("\n")}`;
+        }
+        if (agent.output) {
+          result += `\n\nOutput:\n${agent.output}`;
+        }
+        if (agent.error) {
+          result += `\n\nError: ${agent.error}`;
+        }
+        return result;
+      }
+
+      case "cancel_agent": {
+        const cancelled = cancelAgent(args.id);
+        if (cancelled) return `Cancelled agent ${args.id}.`;
+        const existing = getAgent(args.id);
+        if (!existing) return `Error: Agent "${args.id}" not found.`;
+        return `Agent ${args.id} is not running (status: ${existing.status}).`;
       }
 
       default:

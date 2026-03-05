@@ -54,6 +54,16 @@ export function formatToolLabel(name: string, args: Record<string, any>): string
     }
     case "use_skill":
       return `skill ${args.name ?? "?"}`;
+    case "create_agent": {
+      const p = args.prompt?.length > 40 ? `${args.prompt.slice(0, 40)}...` : (args.prompt ?? "");
+      return `spawn agent: ${p}`;
+    }
+    case "list_agents":
+      return "list agents";
+    case "get_agent_status":
+      return `status ${args.id ?? ""}`;
+    case "cancel_agent":
+      return `cancel ${args.id ?? ""}`;
     default:
       return `${name}(...)`;
   }
