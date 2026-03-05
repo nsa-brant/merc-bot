@@ -14,6 +14,8 @@ interface SlashCommandDeps {
   clearConversation: () => void;
   updateClient: (client: OpenAI) => void;
   model: string;
+  cookMode?: boolean;
+  setCookMode?: (mode: boolean) => void;
 }
 
 /**
@@ -150,9 +152,18 @@ export function useSlashCommands(deps: SlashCommandDeps) {
           status(`Config: ${CONFIG_FILE}`);
           return true;
 
+        case "/cook":
+          if (deps.setCookMode) {
+            const next = !deps.cookMode;
+            deps.setCookMode(next);
+            status(next ? "Cook mode ON — auto-approving all file writes" : "Cook mode OFF — back to manual approval");
+          }
+          return true;
+
         case "/help": {
           const cmds = [
             ["/clear", "Reset conversation"],
+            ["/cook", "Toggle auto-approve file writes"],
             ["/model [name]", "Show or switch model"],
             ["/system [prompt]", "Show or change system prompt"],
             ["/key [key]", "Show or update API key"],

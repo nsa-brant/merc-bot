@@ -15,7 +15,9 @@ import OneShot from "./src/one-shot.tsx";
 import ApiKeySetup from "./src/components/ApiKeySetup.tsx";
 import type OpenAI from "openai";
 
-const args = process.argv.slice(2);
+const rawArgs = process.argv.slice(2);
+const cookFlag = rawArgs.includes("--cook");
+const args = rawArgs.filter((a) => a !== "--cook");
 const defaultModel = getDefaultModel();
 
 function Root() {
@@ -50,10 +52,10 @@ function Root() {
 
   if (args.length > 0) {
     const prompt = args.join(" ");
-    return <OneShot client={client} defaultModel={defaultModel} prompt={prompt} />;
+    return <OneShot client={client} defaultModel={defaultModel} prompt={prompt} cookMode={cookFlag} />;
   }
 
-  return <App client={client} defaultModel={defaultModel} />;
+  return <App client={client} defaultModel={defaultModel} initialCookMode={cookFlag} />;
 }
 
 render(<Root />);

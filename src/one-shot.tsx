@@ -16,9 +16,10 @@ interface OneShotProps {
   client: OpenAI;
   defaultModel: string;
   prompt: string;
+  cookMode?: boolean;
 }
 
-export default function OneShot({ client, defaultModel, prompt }: OneShotProps) {
+export default function OneShot({ client, defaultModel, prompt, cookMode = false }: OneShotProps) {
   const { exit } = useApp();
   const chat = useChat(client, defaultModel);
   const {
@@ -32,7 +33,8 @@ export default function OneShot({ client, defaultModel, prompt }: OneShotProps) 
     chat.setConfirmRequest,
     chat.setDeleteConfirmRequest,
     chat.confirmRequest,
-    chat.deleteConfirmRequest
+    chat.deleteConfirmRequest,
+    cookMode
   );
 
   useEffect(() => {
