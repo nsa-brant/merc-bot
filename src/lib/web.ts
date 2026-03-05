@@ -10,6 +10,70 @@ export interface SearchResult {
 }
 
 /**
+ * Validate a URL to prevent SSRF attacks.
+ * Blocks internal/private addresses and non-http(s) protocols.
+ */
+export function validateUrl(url: string): { valid: boolean; reason: string } {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return { valid: false, reason: "Invalid URL" };
+  }
+
+  // Only allow http and https
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    return { valid: false, reason: `Blocked protocol: ${parsed.protocol}` };
+  }
+
+  const hostname = parsed.hostname.toLowerCase();
+
+  // Must have a hostname
+  if (!hostname) {
+    return { valid: false, reason: "URL has no hostname" };
+  }
+
+  // Block localhost variants
+  if (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "::1" ||
+    hostname === "[::1]" ||
+    hostname === "0.0.0.0"
+  ) {
+    return { valid: false, reason: `Blocked host: ${hostname}` };
+  }
+
+  // Block private/internal IP ranges
+  const ipv4Match = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (ipv4Match) {
+    const [, a, b] = ipv4Match.map(Number) as [number, number, number, number, number];
+    // 10.0.0.0/8
+    if (a === 10) {
+      return { valid: false, reason: "Blocked private IP range (10.x.x.x)" };
+    }
+    // 172.16.0.0/12
+    if (a === 172 && b! >= 16 && b! <= 31) {
+      return { valid: false, reason: "Blocked private IP range (172.16-31.x.x)" };
+    }
+    // 192.168.0.0/16
+    if (a === 192 && b === 168) {
+      return { valid: false, reason: "Blocked private IP range (192.168.x.x)" };
+    }
+    // 169.254.0.0/16 (link-local)
+    if (a === 169 && b === 254) {
+      return { valid: false, reason: "Blocked link-local IP range (169.254.x.x)" };
+    }
+    // 0.x.x.x
+    if (a === 0) {
+      return { valid: false, reason: "Blocked IP range (0.x.x.x)" };
+    }
+  }
+
+  return { valid: true, reason: "" };
+}
+
+/**
  * Search DuckDuckGo and return parsed results.
  */
 export async function webSearch(
@@ -87,6 +151,11 @@ export async function webFetch(
   url: string,
   maxLength: number = 8000
 ): Promise<string> {
+  const validation = validateUrl(url);
+  if (!validation.valid) {
+    throw new Error(`SSRF protection: ${validation.reason} — ${url}`);
+  }
+
   const res = await fetch(url, {
     headers: {
       "User-Agent":
