@@ -1,11 +1,10 @@
-import { useCallback } from "react";
 import { useApp } from "ink";
 import OpenAI from "openai";
-import chalk from "chalk";
+import { useCallback } from "react";
+import { loadConfig, saveConfig } from "../lib/config.ts";
+import { BASE_URL, CONFIG_FILE, VERSION } from "../lib/paths.ts";
+import { listSessions, loadSession, saveSession } from "../lib/sessions.ts";
 import type { ChatState, CompletedItemInput } from "../lib/types.ts";
-import { VERSION, BASE_URL, CONFIG_FILE } from "../lib/paths.ts";
-import { saveConfig, loadConfig } from "../lib/config.ts";
-import { saveSession, loadSession, listSessions } from "../lib/sessions.ts";
 
 interface SlashCommandDeps {
   getState: () => ChatState;
@@ -31,8 +30,7 @@ export function useSlashCommands(deps: SlashCommandDeps) {
 
       const [cmd, ...rest] = input.split(/\s+/);
       const arg = rest.join(" ");
-      const status = (content: string) =>
-        deps.addCompleted({ type: "status", content });
+      const status = (content: string) => deps.addCompleted({ type: "status", content });
 
       switch (cmd) {
         case "/quit":
@@ -65,7 +63,7 @@ export function useSlashCommands(deps: SlashCommandDeps) {
             const state = deps.getState();
             const sys = state.messages[0];
             const content = sys && "content" in sys ? String(sys.content) : "";
-            status(content.slice(0, 200) + "…");
+            status(`${content.slice(0, 200)}…`);
           }
           return true;
 
@@ -74,12 +72,8 @@ export function useSlashCommands(deps: SlashCommandDeps) {
           let count = 0;
           for (const m of state.messages.slice(1)) {
             if (m.role === "tool") continue;
-            const content =
-              "content" in m && typeof m.content === "string"
-                ? m.content
-                : "";
-            const preview =
-              content.length > 80 ? content.slice(0, 80) + "…" : content;
+            const content = "content" in m && typeof m.content === "string" ? m.content : "";
+            const preview = content.length > 80 ? `${content.slice(0, 80)}…` : content;
             const icon = m.role === "user" ? "▹" : "◃";
             status(`${icon} ${preview}`);
             if (++count >= 20) {
@@ -99,7 +93,7 @@ export function useSlashCommands(deps: SlashCommandDeps) {
           } else {
             const config = loadConfig();
             const masked = config?.api_key
-              ? config.api_key.slice(0, 6) + "…" + config.api_key.slice(-4)
+              ? `${config.api_key.slice(0, 6)}…${config.api_key.slice(-4)}`
               : "not set";
             status(`Key: ${masked}`);
             status(`Config: ${CONFIG_FILE}`);
@@ -127,9 +121,7 @@ export function useSlashCommands(deps: SlashCommandDeps) {
           } else {
             const state = deps.getState();
             const result = loadSession(state, arg);
-            status(
-              result.success ? `✓ ${result.message}` : `✗ ${result.message}`
-            );
+            status(result.success ? `✓ ${result.message}` : `✗ ${result.message}`);
           }
           return true;
 
@@ -156,7 +148,11 @@ export function useSlashCommands(deps: SlashCommandDeps) {
           if (deps.setCookMode) {
             const next = !deps.cookMode;
             deps.setCookMode(next);
-            status(next ? "Cook mode ON — auto-approving all file writes" : "Cook mode OFF — back to manual approval");
+            status(
+              next
+                ? "Cook mode ON — auto-approving all file writes"
+                : "Cook mode OFF — back to manual approval",
+            );
           }
           return true;
 
@@ -185,7 +181,7 @@ export function useSlashCommands(deps: SlashCommandDeps) {
           return true;
       }
     },
-    [deps, exit]
+    [deps, exit],
   );
 
   return { handleCommand };

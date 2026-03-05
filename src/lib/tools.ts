@@ -1,11 +1,10 @@
+import { execFileSync, execSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { execSync, execFileSync } from "node:child_process";
-import chalk from "chalk";
 import type { ChatCompletionTool } from "openai/resources/chat/completions";
 import { CWD } from "./paths.ts";
 import type { ConfirmFn, DeleteConfirmFn } from "./types.ts";
-import { webSearch, webFetch } from "./web.ts";
+import { webFetch, webSearch } from "./web.ts";
 
 export const tools: ChatCompletionTool[] = [
   {
@@ -106,8 +105,7 @@ export const tools: ChatCompletionTool[] = [
     type: "function",
     function: {
       name: "list_directory",
-      description:
-        "List files and directories. Returns names with / suffix for directories.",
+      description: "List files and directories. Returns names with / suffix for directories.",
       parameters: {
         type: "object",
         properties: {
@@ -147,8 +145,7 @@ export const tools: ChatCompletionTool[] = [
     type: "function",
     function: {
       name: "run_command",
-      description:
-        "Run a shell command and return its output. Use for builds, tests, git, etc.",
+      description: "Run a shell command and return its output. Use for builds, tests, git, etc.",
       parameters: {
         type: "object",
         properties: {
@@ -239,24 +236,15 @@ export function formatToolLabel(name: string, args: Record<string, any>): string
       return `grep ${args.pattern}${extra}`;
     }
     case "run_command": {
-      const cmd =
-        args.command.length > 50
-          ? args.command.slice(0, 50) + "..."
-          : args.command;
+      const cmd = args.command.length > 50 ? `${args.command.slice(0, 50)}...` : args.command;
       return `run ${cmd}`;
     }
     case "web_search": {
-      const q =
-        args.query.length > 40
-          ? args.query.slice(0, 40) + "..."
-          : args.query;
+      const q = args.query.length > 40 ? `${args.query.slice(0, 40)}...` : args.query;
       return `search ${q}`;
     }
     case "web_fetch": {
-      const u =
-        args.url.length > 50
-          ? args.url.slice(0, 50) + "..."
-          : args.url;
+      const u = args.url.length > 50 ? `${args.url.slice(0, 50)}...` : args.url;
       return `fetch ${u}`;
     }
     default:
@@ -272,7 +260,7 @@ export async function executeTool(
   name: string,
   args: Record<string, any>,
   confirm: ConfirmFn,
-  deleteConfirm: DeleteConfirmFn
+  deleteConfirm: DeleteConfirmFn,
 ): Promise<string> {
   try {
     switch (name) {
@@ -287,8 +275,7 @@ export async function executeTool(
 
       case "edit_file": {
         const filePath = resolvePath(args.path);
-        if (!fs.existsSync(filePath))
-          return `Error: File not found: ${filePath}`;
+        if (!fs.existsSync(filePath)) return `Error: File not found: ${filePath}`;
 
         const oldContent = fs.readFileSync(filePath, "utf-8");
         if (!args.old_string) {
@@ -309,9 +296,7 @@ export async function executeTool(
         if (!approved) return "User denied the edit.";
 
         fs.writeFileSync(filePath, newContent, "utf-8");
-        const count = args.replace_all
-          ? oldContent.split(args.old_string).length - 1
-          : 1;
+        const count = args.replace_all ? oldContent.split(args.old_string).length - 1 : 1;
         return `Applied edit to ${filePath} (${count} replacement${count > 1 ? "s" : ""})`;
       }
 

@@ -12,10 +12,7 @@ export interface SearchResult {
 /**
  * Search DuckDuckGo and return parsed results.
  */
-export async function webSearch(
-  query: string,
-  maxResults: number = 8
-): Promise<SearchResult[]> {
+export async function webSearch(query: string, maxResults: number = 8): Promise<SearchResult[]> {
   const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
   const res = await fetch(url, {
     method: "POST",
@@ -57,20 +54,12 @@ function parseDDGResults(html: string, max: number): SearchResult[] {
     }
 
     // Extract title text
-    const titleMatch = block.match(
-      /class="result__a"[^>]*>([\s\S]*?)<\/a>/
-    );
-    const title = titleMatch
-      ? stripHtml(titleMatch[1]!).trim()
-      : "";
+    const titleMatch = block.match(/class="result__a"[^>]*>([\s\S]*?)<\/a>/);
+    const title = titleMatch ? stripHtml(titleMatch[1]!).trim() : "";
 
     // Extract snippet
-    const snippetMatch = block.match(
-      /class="result__snippet"[^>]*>([\s\S]*?)<\/(?:a|td|span)>/
-    );
-    const snippet = snippetMatch
-      ? stripHtml(snippetMatch[1]!).trim()
-      : "";
+    const snippetMatch = block.match(/class="result__snippet"[^>]*>([\s\S]*?)<\/(?:a|td|span)>/);
+    const snippet = snippetMatch ? stripHtml(snippetMatch[1]!).trim() : "";
 
     if (url && title) {
       results.push({ title, url, snippet });
@@ -83,10 +72,7 @@ function parseDDGResults(html: string, max: number): SearchResult[] {
 /**
  * Fetch a URL and return its text content (HTML stripped).
  */
-export async function webFetch(
-  url: string,
-  maxLength: number = 8000
-): Promise<string> {
+export async function webFetch(url: string, maxLength: number = 8000): Promise<string> {
   const res = await fetch(url, {
     headers: {
       "User-Agent":
@@ -154,7 +140,7 @@ function htmlToText(html: string, maxLength: number): string {
     .trim();
 
   if (text.length > maxLength) {
-    text = text.slice(0, maxLength) + "\n\n[truncated]";
+    text = `${text.slice(0, maxLength)}\n\n[truncated]`;
   }
 
   return text;

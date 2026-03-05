@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { loadHistory, appendHistory } from "../lib/history.ts";
+import { useEffect, useState } from "react";
+import { appendHistory, loadHistory } from "../lib/history.ts";
 
 export function useHistory() {
   const [history, setHistory] = useState<string[]>([]);

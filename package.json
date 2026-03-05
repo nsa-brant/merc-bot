@@ -1,14 +1,27 @@
 {
   "name": "merc-bot",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "module": "index.tsx",
   "type": "module",
   "private": true,
   "bin": {
     "merc": "./index.tsx"
   },
+  "scripts": {
+    "lint": "bunx biome lint .",
+    "lint:fix": "bunx biome lint --write .",
+    "format": "bunx biome format .",
+    "format:fix": "bunx biome format --write .",
+    "check": "bunx biome check .",
+    "check:fix": "bunx biome check --write .",
+    "typecheck": "bunx tsc --noEmit",
+    "build": "bun build --compile index.tsx --outfile merc",
+    "postinstall": "lefthook install || true"
+  },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@biomejs/biome": "^2.4.6",
+    "@types/bun": "latest",
+    "lefthook": "^2.1.2"
   },
   "peerDependencies": {
     "typescript": "^5"

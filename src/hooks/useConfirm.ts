@@ -1,5 +1,10 @@
 import { useCallback } from "react";
-import type { ConfirmFn, DeleteConfirmFn, ConfirmRequest, DeleteConfirmRequest } from "../lib/types.ts";
+import type {
+  ConfirmFn,
+  ConfirmRequest,
+  DeleteConfirmFn,
+  DeleteConfirmRequest,
+} from "../lib/types.ts";
 
 /**
  * Creates confirm/deleteConfirm callbacks that bridge tool execution
@@ -13,7 +18,7 @@ export function useConfirm(
   setDeleteConfirmRequest: (req: DeleteConfirmRequest | null) => void,
   confirmRequest: ConfirmRequest | null,
   deleteConfirmRequest: DeleteConfirmRequest | null,
-  cookMode: boolean = false
+  cookMode: boolean = false,
 ) {
   const confirm: ConfirmFn = useCallback(
     (filePath, oldContent, newContent) => {
@@ -22,7 +27,7 @@ export function useConfirm(
         setConfirmRequest({ filePath, oldContent, newContent, resolve });
       });
     },
-    [setConfirmRequest, cookMode]
+    [setConfirmRequest, cookMode],
   );
 
   const deleteConfirm: DeleteConfirmFn = useCallback(
@@ -32,7 +37,7 @@ export function useConfirm(
         setDeleteConfirmRequest({ filePath, resolve });
       });
     },
-    [setDeleteConfirmRequest, cookMode]
+    [setDeleteConfirmRequest, cookMode],
   );
 
   const handleConfirm = useCallback(() => {

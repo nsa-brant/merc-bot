@@ -1,4 +1,3 @@
-import React from "react";
 import { Box, Text } from "ink";
 
 interface ToolResultProps {
@@ -13,16 +12,14 @@ export default function ToolResult({ text }: ToolResultProps) {
   return (
     <Box flexDirection="column">
       {displayLines.map((line, i) => {
-        const trimmed = line.length > 120 ? line.slice(0, 120) + "…" : line;
+        const trimmed = line.length > 120 ? `${line.slice(0, 120)}…` : line;
         return (
           <Text key={i} dimColor>
-            │   {trimmed}
+            │ {trimmed}
           </Text>
         );
       })}
-      {remaining > 0 && (
-        <Text dimColor>│   … {remaining} more lines</Text>
-      )}
+      {remaining > 0 && <Text dimColor>│ … {remaining} more lines</Text>}
     </Box>
   );
 }
