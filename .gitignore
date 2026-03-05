@@ -1,0 +1,8 @@
+node_modules/
+bun.lock
+.env
+.cursor/
+merc
+*.pyc
+__pycache__/
+.venv/
