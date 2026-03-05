@@ -61,3 +61,16 @@ export interface ActiveToolCall {
   result?: string;
   isWrite: boolean;
 }
+
+/** A background agent running a headless agent loop */
+export interface BackgroundAgent {
+  id: string;
+  prompt: string;
+  status: "running" | "completed" | "failed" | "cancelled";
+  createdAt: number;
+  completedAt?: number;
+  output: string;
+  toolLog: string[];
+  error?: string;
+  abort: AbortController;
+}
