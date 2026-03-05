@@ -2,6 +2,7 @@ import { execFileSync, execSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { cancelAgent, createAgent, getAgent, listAgents } from "./agent-manager.ts";
+import { callMcpTool, isMcpTool } from "./mcp.ts";
 import { CWD } from "./paths.ts";
 import { executeUseSkill } from "./skills.ts";
 import { skillRegistry } from "./tool-defs.ts";
@@ -296,6 +297,9 @@ export async function executeTool(
       }
 
       default:
+        if (isMcpTool(name)) {
+          return await callMcpTool(name, args);
+        }
         return `Unknown tool: ${name}`;
     }
   } catch (err: any) {

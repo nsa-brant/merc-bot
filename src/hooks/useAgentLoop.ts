@@ -2,6 +2,8 @@ import type { ChatCompletionMessageParam } from "openai/resources/chat/completio
 import { useCallback } from "react";
 import { apiCallWithRetry } from "../lib/api.ts";
 import { renderMarkdown } from "../lib/markdown.ts";
+import { getMcpToolDefs } from "../lib/mcp.ts";
+import { tools } from "../lib/tool-defs.ts";
 import { executeTool, formatToolLabel } from "../lib/tools.ts";
 import type {
   ActiveToolCall,
@@ -12,6 +14,7 @@ import type {
   Phase,
   StreamedToolCall,
 } from "../lib/types.ts";
+import { buildSystemPrompt } from "./useChat.ts";
 
 const MAX_ITERATIONS = 15;
 
@@ -31,6 +34,9 @@ export function useAgentLoop(deps: AgentLoopDeps) {
     async (userMessage?: string) => {
       const state = deps.getState();
 
+      // Refresh system prompt to include any newly-connected MCP tools
+      state.messages[0] = { role: "system", content: buildSystemPrompt() };
+
       if (userMessage) {
         state.messages.push({ role: "user", content: userMessage });
         deps.addCompleted({ type: "user", content: userMessage });
@@ -47,7 +53,8 @@ export function useAgentLoop(deps: AgentLoopDeps) {
           deps.setStreamText("");
           deps.setToolCalls([]);
 
-          const stream = await apiCallWithRetry(state);
+          const allTools = [...tools, ...getMcpToolDefs()];
+          const stream = await apiCallWithRetry(state, allTools);
 
           let startedStreaming = false;
 

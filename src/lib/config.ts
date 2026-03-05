@@ -2,7 +2,7 @@ import * as fs from "node:fs";
 import { CONFIG_DIR, CONFIG_FILE } from "./paths.ts";
 import type { MercConfig } from "./types.ts";
 
-const cachedConfig = (() => {
+let cachedConfig = (() => {
   try {
     const data = JSON.parse(fs.readFileSync(CONFIG_FILE, "utf-8")) as MercConfig;
     const perms = fs.statSync(CONFIG_FILE).mode & 0o777;
@@ -27,6 +27,7 @@ export function saveConfig(config: MercConfig) {
   fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), {
     mode: 0o600,
   });
+  cachedConfig = config;
 }
 
 export function getDefaultModel(): string {

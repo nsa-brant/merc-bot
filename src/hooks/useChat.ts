@@ -1,5 +1,6 @@
 import type OpenAI from "openai";
 import { useCallback, useRef, useState } from "react";
+import { getMcpToolDefs } from "../lib/mcp.ts";
 import { CWD } from "../lib/paths.ts";
 import type { SkillRegistry } from "../lib/skills.ts";
 import { buildSkillsPromptSection } from "../lib/skills.ts";
@@ -13,6 +14,23 @@ import type {
   DeleteConfirmRequest,
   Phase,
 } from "../lib/types.ts";
+
+function buildMcpSection(): string {
+  const mcpDefs = getMcpToolDefs();
+  if (mcpDefs.length === 0) return "";
+
+  const toolDescriptions = mcpDefs
+    .filter((t): t is Extract<typeof t, { type: "function" }> => t.type === "function")
+    .map((t) => `- ${t.function.name}: ${t.function.description || "no description"}`)
+    .join("\n");
+
+  return `\n\nYou have access to external MCP (Model Context Protocol) tools. IMPORTANT: Always consider using these tools BEFORE responding. If the user asks about personal preferences, memories, past conversations, or anything that might be stored externally, use the relevant MCP tool first rather than saying you don't know.
+
+MCP tools available:
+${toolDescriptions}
+
+When in doubt about whether to use an MCP tool, use it. It's better to check and find nothing than to miss information that exists.`;
+}
 
 const BASE_PROMPT = `You are Mercury, an ultra-fast AI coding agent powered by Inception Labs' diffusion LLM.
 You have tools to read, edit, write, delete, rename files, list directories, search code, and run shell commands.
@@ -45,11 +63,9 @@ Formatting rules for terminal output:
 - Only use tables for short, structured data (3-5 word cells max).
 - Use **bold** for emphasis and \`code\` for identifiers.`;
 
-export function buildSystemPrompt(registry: SkillRegistry): string {
-  return BASE_PROMPT + buildSkillsPromptSection(registry);
+export function buildSystemPrompt(registry?: SkillRegistry): string {
+  return BASE_PROMPT + buildMcpSection() + buildSkillsPromptSection(registry ?? skillRegistry);
 }
-
-const SYSTEM_PROMPT = buildSystemPrompt(skillRegistry);
 
 export function useChat(client: OpenAI, defaultModel: string) {
   const [model, setModel] = useState(defaultModel);
@@ -64,7 +80,7 @@ export function useChat(client: OpenAI, defaultModel: string) {
 
   const stateRef = useRef<ChatState>({
     model: defaultModel,
-    messages: [{ role: "system", content: SYSTEM_PROMPT }],
+    messages: [{ role: "system", content: buildSystemPrompt() }],
     client,
   });
 
