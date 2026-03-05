@@ -1,6 +1,7 @@
 import { execFileSync, execSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { callMcpTool, isMcpTool } from "./mcp.ts";
 import { CWD } from "./paths.ts";
 import { isBinary, resolvePath } from "./tool-utils.ts";
 import type { ConfirmFn, DeleteConfirmFn } from "./types.ts";
@@ -236,6 +237,9 @@ export async function executeTool(
       }
 
       default:
+        if (isMcpTool(name)) {
+          return await callMcpTool(name, args);
+        }
         return `Unknown tool: ${name}`;
     }
   } catch (err: any) {

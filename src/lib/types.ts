@@ -1,9 +1,16 @@
 import type OpenAI from "openai";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 
+export interface McpServerConfig {
+  command: string;
+  args?: string[];
+  env?: Record<string, string>;
+}
+
 export interface MercConfig {
   api_key: string;
   model?: string;
+  mcpServers?: Record<string, McpServerConfig>;
 }
 
 export interface ChatState {
