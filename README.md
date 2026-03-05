@@ -1,6 +1,33 @@
 # merc
 
-Mercury — an ultra-fast AI coding agent CLI powered by Inception Labs' diffusion LLM. Built with [Ink](https://github.com/vadimdemedes/ink) (React for terminal).
+Mercury — an ultra-fast AI coding agent CLI and code assistant powered by Inception Labs' diffusion LLM. Built with [Ink](https://github.com/vadimdemedes/ink) (React for terminal).
+
+## What It Does
+
+Merc is an agentic coding assistant that runs in your terminal. It can read, write, and edit files in your project, search code, run shell commands, and hold multi-turn conversations — all with user approval before any changes are applied.
+
+### Tools
+
+- **Read files** — view any file in your project
+- **Edit files** — surgical find-and-replace with diff preview and y/n confirmation
+- **Write files** — create new files or full overwrites, with diff preview
+- **Delete files** — remove files or empty directories, with confirmation
+- **Rename/move files** — rename or relocate files and directories
+- **List directories** — browse project structure
+- **Grep search** — regex search across files with glob filtering
+- **Run commands** — execute shell commands (builds, tests, git, etc.) with a 30s timeout
+
+### Features
+
+- Streaming responses with live markdown rendering
+- Agentic loop — Mercury can chain multiple tool calls to complete complex tasks
+- Session save/load — persist and resume conversations
+- Command history with arrow-key navigation
+- One-shot mode for quick questions (`merc "what does this function do"`)
+- Interactive mode for extended coding sessions
+- Colored diffs with y/n approval before any file modification
+- Configurable model selection
+- API retry with exponential backoff
 
 ## Install
 
