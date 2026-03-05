@@ -1,4 +1,5 @@
 import type { ChatCompletionTool } from "openai/resources/chat/completions";
+import { loadSkills } from "./skills.ts";
 
 /** Agent management tool names — excluded from background agents to prevent recursion */
 const AGENT_TOOL_NAMES = new Set([
@@ -9,9 +10,36 @@ const AGENT_TOOL_NAMES = new Set([
 ]);
 
 /** Tools excluded from background agents for safety */
-const BACKGROUND_EXCLUDED = new Set([...AGENT_TOOL_NAMES, "delete_file", "rename_file"]);
+const BACKGROUND_EXCLUDED = new Set([
+  ...AGENT_TOOL_NAMES,
+  "delete_file",
+  "rename_file",
+  "use_skill",
+]);
 
-export const tools: ChatCompletionTool[] = [
+export const skillRegistry = loadSkills();
+
+const useSkillTool: ChatCompletionTool = {
+  type: "function",
+  function: {
+    name: "use_skill",
+    description:
+      "Load the full instructions for an installed skill. Call this when the user's request " +
+      "matches a skill's purpose. The skill's instructions will guide your next actions.",
+    parameters: {
+      type: "object",
+      properties: {
+        name: {
+          type: "string",
+          description: "The skill name to activate (as listed in Available Skills)",
+        },
+      },
+      required: ["name"],
+    },
+  },
+};
+
+const baseTools: ChatCompletionTool[] = [
   {
     type: "function",
     function: {
@@ -268,7 +296,10 @@ export const tools: ChatCompletionTool[] = [
   },
 ];
 
-/** Restricted tool set for background agents (no delete, rename, or agent management) */
-export const backgroundTools: ChatCompletionTool[] = tools.filter(
+export const tools: ChatCompletionTool[] =
+  skillRegistry.size > 0 ? [...baseTools, useSkillTool] : baseTools;
+
+/** Restricted tool set for background agents (no delete, rename, skills, or agent management) */
+export const backgroundTools: ChatCompletionTool[] = baseTools.filter(
   (t) => t.type === "function" && !BACKGROUND_EXCLUDED.has(t.function.name),
 );
