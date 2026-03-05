@@ -5,6 +5,7 @@ import chalk from "chalk";
 import type { ChatCompletionTool } from "openai/resources/chat/completions";
 import { CWD } from "./paths.ts";
 import type { ConfirmFn, DeleteConfirmFn } from "./types.ts";
+import { webSearch, webFetch } from "./web.ts";
 
 export const tools: ChatCompletionTool[] = [
   {
@@ -157,6 +158,46 @@ export const tools: ChatCompletionTool[] = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "web_search",
+      description:
+        "Search the web using DuckDuckGo. Returns titles, URLs, and snippets. " +
+        "Use this to find documentation, look up errors, research APIs, etc.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "Search query" },
+          max_results: {
+            type: "number",
+            description: "Max results to return (default: 8)",
+          },
+        },
+        required: ["query"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "web_fetch",
+      description:
+        "Fetch a URL and return its text content. HTML is converted to readable text. " +
+        "Use this to read documentation pages, API references, articles, etc.",
+      parameters: {
+        type: "object",
+        properties: {
+          url: { type: "string", description: "URL to fetch" },
+          max_length: {
+            type: "number",
+            description: "Max characters to return (default: 8000)",
+          },
+        },
+        required: ["url"],
+      },
+    },
+  },
 ];
 
 export function resolvePath(p: string): string {
@@ -203,6 +244,20 @@ export function formatToolLabel(name: string, args: Record<string, any>): string
           ? args.command.slice(0, 50) + "..."
           : args.command;
       return `run ${cmd}`;
+    }
+    case "web_search": {
+      const q =
+        args.query.length > 40
+          ? args.query.slice(0, 40) + "..."
+          : args.query;
+      return `search ${q}`;
+    }
+    case "web_fetch": {
+      const u =
+        args.url.length > 50
+          ? args.url.slice(0, 50) + "..."
+          : args.url;
+      return `fetch ${u}`;
     }
     default:
       return `${name}(...)`;
@@ -336,6 +391,18 @@ export async function executeTool(
           timeout: 30000,
           stdio: ["pipe", "pipe", "pipe"],
         }).trim();
+      }
+
+      case "web_search": {
+        const results = await webSearch(args.query, args.max_results ?? 8);
+        if (results.length === 0) return "No results found.";
+        return results
+          .map((r, i) => `${i + 1}. ${r.title}\n   ${r.url}\n   ${r.snippet}`)
+          .join("\n\n");
+      }
+
+      case "web_fetch": {
+        return await webFetch(args.url, args.max_length ?? 8000);
       }
 
       default:
