@@ -19,9 +19,11 @@ import * as path from "node:path";
 interface AppProps {
   client: OpenAI;
   defaultModel: string;
+  initialCookMode?: boolean;
 }
 
-export default function App({ client, defaultModel }: AppProps) {
+export default function App({ client, defaultModel, initialCookMode = false }: AppProps) {
+  const [cookMode, setCookMode] = useState(initialCookMode);
   const chat = useChat(client, defaultModel);
   const { history, addEntry } = useHistory();
   const {
@@ -35,7 +37,8 @@ export default function App({ client, defaultModel }: AppProps) {
     chat.setConfirmRequest,
     chat.setDeleteConfirmRequest,
     chat.confirmRequest,
-    chat.deleteConfirmRequest
+    chat.deleteConfirmRequest,
+    cookMode
   );
 
   // Set client on mount
@@ -50,6 +53,8 @@ export default function App({ client, defaultModel }: AppProps) {
     clearConversation: chat.clearConversation,
     updateClient: chat.updateClient,
     model: chat.model,
+    cookMode,
+    setCookMode,
   });
 
   const { runLoop } = useAgentLoop({
@@ -97,7 +102,7 @@ export default function App({ client, defaultModel }: AppProps) {
       <Static items={[{ id: "banner", type: "banner" as const }, ...chat.completedItems]}>
         {(item: any) => {
           if (item.type === "banner") {
-            return <Banner key="banner" model={chat.model} />;
+            return <Banner key="banner" model={chat.model} cookMode={cookMode} />;
           }
           return <MessageBlock key={item.id} item={item as CompletedItem} />;
         }}

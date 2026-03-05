@@ -12,22 +12,27 @@ export function useConfirm(
   setConfirmRequest: (req: ConfirmRequest | null) => void,
   setDeleteConfirmRequest: (req: DeleteConfirmRequest | null) => void,
   confirmRequest: ConfirmRequest | null,
-  deleteConfirmRequest: DeleteConfirmRequest | null
+  deleteConfirmRequest: DeleteConfirmRequest | null,
+  cookMode: boolean = false
 ) {
   const confirm: ConfirmFn = useCallback(
-    (filePath, oldContent, newContent) =>
-      new Promise<boolean>((resolve) => {
+    (filePath, oldContent, newContent) => {
+      if (cookMode) return Promise.resolve(true);
+      return new Promise<boolean>((resolve) => {
         setConfirmRequest({ filePath, oldContent, newContent, resolve });
-      }),
-    [setConfirmRequest]
+      });
+    },
+    [setConfirmRequest, cookMode]
   );
 
   const deleteConfirm: DeleteConfirmFn = useCallback(
-    (filePath) =>
-      new Promise<boolean>((resolve) => {
+    (filePath) => {
+      if (cookMode) return Promise.resolve(true);
+      return new Promise<boolean>((resolve) => {
         setDeleteConfirmRequest({ filePath, resolve });
-      }),
-    [setDeleteConfirmRequest]
+      });
+    },
+    [setDeleteConfirmRequest, cookMode]
   );
 
   const handleConfirm = useCallback(() => {
