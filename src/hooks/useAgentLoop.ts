@@ -36,6 +36,8 @@ export function useAgentLoop(deps: AgentLoopDeps) {
         deps.addCompleted({ type: "user", content: userMessage });
       }
 
+      let hitLimit = false;
+
       for (let i = 0; i < MAX_ITERATIONS; i++) {
         let textContent = "";
         const toolCalls: StreamedToolCall[] = [];
@@ -145,10 +147,22 @@ export function useAgentLoop(deps: AgentLoopDeps) {
           }
 
           deps.setToolCalls([]);
+
+          if (i === MAX_ITERATIONS - 1) {
+            hitLimit = true;
+          }
+
           continue; // loop again for more tool calls or final response
         }
 
         break; // no tool calls, done
+      }
+
+      if (hitLimit) {
+        deps.addCompleted({
+          type: "status",
+          content: `⚠ Agent loop reached maximum ${MAX_ITERATIONS} iterations. The task may be incomplete.`,
+        });
       }
 
       deps.setPhase("idle");

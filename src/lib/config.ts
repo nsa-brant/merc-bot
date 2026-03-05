@@ -4,7 +4,15 @@ import type { MercConfig } from "./types.ts";
 
 const cachedConfig = (() => {
   try {
-    return JSON.parse(fs.readFileSync(CONFIG_FILE, "utf-8")) as MercConfig;
+    const data = JSON.parse(fs.readFileSync(CONFIG_FILE, "utf-8")) as MercConfig;
+    const perms = fs.statSync(CONFIG_FILE).mode & 0o777;
+    if (perms !== 0o600) {
+      console.error(
+        `Warning: ${CONFIG_FILE} has overly permissive permissions. Run: chmod 600 ${CONFIG_FILE}`,
+      );
+      fs.chmodSync(CONFIG_FILE, 0o600);
+    }
+    return data;
   } catch {
     return null;
   }
@@ -15,7 +23,7 @@ export function loadConfig(): MercConfig | null {
 }
 
 export function saveConfig(config: MercConfig) {
-  fs.mkdirSync(CONFIG_DIR, { recursive: true });
+  fs.mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
   fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), {
     mode: 0o600,
   });
