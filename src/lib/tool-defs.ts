@@ -1,5 +1,16 @@
 import type { ChatCompletionTool } from "openai/resources/chat/completions";
 
+/** Agent management tool names — excluded from background agents to prevent recursion */
+const AGENT_TOOL_NAMES = new Set([
+  "create_agent",
+  "list_agents",
+  "get_agent_status",
+  "cancel_agent",
+]);
+
+/** Tools excluded from background agents for safety */
+const BACKGROUND_EXCLUDED = new Set([...AGENT_TOOL_NAMES, "delete_file", "rename_file"]);
+
 export const tools: ChatCompletionTool[] = [
   {
     type: "function",
@@ -189,4 +200,75 @@ export const tools: ChatCompletionTool[] = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "create_agent",
+      description:
+        "Create and start a background agent to work on a task independently. " +
+        "The agent runs in the background while you continue the conversation. " +
+        "Use list_agents or get_agent_status to check on it later.",
+      parameters: {
+        type: "object",
+        properties: {
+          prompt: {
+            type: "string",
+            description: "The task description for the background agent",
+          },
+        },
+        required: ["prompt"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "list_agents",
+      description: "List all background agents and their current status.",
+      parameters: {
+        type: "object",
+        properties: {},
+        required: [],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_agent_status",
+      description: "Get detailed status, output, and tool log for a specific background agent.",
+      parameters: {
+        type: "object",
+        properties: {
+          id: {
+            type: "string",
+            description: "Agent ID (e.g. 'agent-1')",
+          },
+        },
+        required: ["id"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "cancel_agent",
+      description: "Cancel a running background agent.",
+      parameters: {
+        type: "object",
+        properties: {
+          id: {
+            type: "string",
+            description: "Agent ID to cancel (e.g. 'agent-1')",
+          },
+        },
+        required: ["id"],
+      },
+    },
+  },
 ];
+
+/** Restricted tool set for background agents (no delete, rename, or agent management) */
+export const backgroundTools: ChatCompletionTool[] = tools.filter(
+  (t) => t.type === "function" && !BACKGROUND_EXCLUDED.has(t.function.name),
+);

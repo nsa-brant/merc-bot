@@ -128,7 +128,13 @@ export function useAgentLoop(deps: AgentLoopDeps) {
             // Show tool call in live area
             deps.addToolCall({ name: tc.name, label, isWrite });
 
-            const result = await executeTool(tc.name, fnArgs, deps.confirm, deps.deleteConfirm);
+            const result = await executeTool(
+              tc.name,
+              fnArgs,
+              deps.confirm,
+              deps.deleteConfirm,
+              state,
+            );
 
             // Move to completed and update live area
             deps.addCompleted({

@@ -52,6 +52,16 @@ export function formatToolLabel(name: string, args: Record<string, any>): string
       const u = args.url.length > 50 ? `${args.url.slice(0, 50)}...` : args.url;
       return `fetch ${u}`;
     }
+    case "create_agent": {
+      const p = args.prompt?.length > 40 ? `${args.prompt.slice(0, 40)}...` : (args.prompt ?? "");
+      return `spawn agent: ${p}`;
+    }
+    case "list_agents":
+      return "list agents";
+    case "get_agent_status":
+      return `status ${args.id ?? ""}`;
+    case "cancel_agent":
+      return `cancel ${args.id ?? ""}`;
     default:
       return `${name}(...)`;
   }
