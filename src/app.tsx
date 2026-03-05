@@ -10,10 +10,11 @@ import MessageBlock from "./components/MessageBlock.tsx";
 import Prompt from "./components/Prompt.tsx";
 import StreamingResponse from "./components/StreamingResponse.tsx";
 import { useAgentLoop } from "./hooks/useAgentLoop.ts";
-import { useChat } from "./hooks/useChat.ts";
+import { buildSystemPrompt, useChat } from "./hooks/useChat.ts";
 import { useConfirm } from "./hooks/useConfirm.ts";
 import { useHistory } from "./hooks/useHistory.ts";
 import { useSlashCommands } from "./hooks/useSlashCommands.ts";
+import { skillRegistry } from "./lib/tools.ts";
 import type { CompletedItem } from "./lib/types.ts";
 
 interface AppProps {
@@ -46,17 +47,6 @@ export default function App({ client, defaultModel, initialCookMode = false }: A
     chat.updateClient(client);
   }, [client, chat.updateClient]);
 
-  const { handleCommand } = useSlashCommands({
-    getState: chat.getState,
-    setModel: chat.setModel,
-    addCompleted: chat.addCompleted,
-    clearConversation: chat.clearConversation,
-    updateClient: chat.updateClient,
-    model: chat.model,
-    cookMode,
-    setCookMode,
-  });
-
   const { runLoop } = useAgentLoop({
     getState: chat.getState,
     setPhase: chat.setPhase,
@@ -66,6 +56,25 @@ export default function App({ client, defaultModel, initialCookMode = false }: A
     addCompleted: chat.addCompleted,
     confirm,
     deleteConfirm,
+  });
+
+  const refreshSystemPrompt = () => {
+    const state = chat.getState();
+    state.messages[0] = { role: "system", content: buildSystemPrompt(skillRegistry) };
+  };
+
+  const { handleCommand } = useSlashCommands({
+    getState: chat.getState,
+    setModel: chat.setModel,
+    addCompleted: chat.addCompleted,
+    clearConversation: chat.clearConversation,
+    updateClient: chat.updateClient,
+    model: chat.model,
+    cookMode,
+    setCookMode,
+    skillRegistry,
+    refreshSystemPrompt,
+    runLoop,
   });
 
   // SIGINT handling
