@@ -31,20 +31,25 @@ Merc is an agentic coding assistant that runs in your terminal. It can read, wri
 
 ## Install
 
+Requires [Bun](https://bun.sh).
+
 ```bash
-git clone git@github.com:nsa-brant/merc-bot.git
+git clone https://github.com/nsa-brant/merc-bot.git
 cd merc-bot
+./install.sh
+```
+
+That's it — installs deps, compiles a native binary, and links `merc` to your PATH.
+
+### Manual Install
+
+If you prefer doing it yourself:
+
+```bash
 bun install
 bun build --compile index.tsx --outfile merc
+ln -sf "$(pwd)/merc" ~/.bun/bin/merc   # or /usr/local/bin/merc
 ```
-
-Then symlink it globally:
-
-```bash
-ln -sf "$(pwd)/merc" ~/.bun/bin/merc
-```
-
-Now `merc` is available from anywhere.
 
 ## Usage
 
